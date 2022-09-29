@@ -2,13 +2,12 @@
 
 use Illuminate\Support\Facades\Facade;
 
-$loginRoute = [
-    "POST",
-    "http://auth-LoadB-1FRA2XQ42LLW-82543b575d8e49f3.elb.us-east-1.amazonaws.com:8000",
-    "api/auth/login"
-];
 return [
-    'login_route' => $loginRoute,
+    'login_route' => [
+        "POST",
+        "http://auth-LoadB-1FRA2XQ42LLW-82543b575d8e49f3.elb.us-east-1.amazonaws.com:8000",
+        "api/auth/login"
+    ],
 
     //publicly accessible routes here
     'routes' => [
@@ -28,6 +27,7 @@ return [
             "api/vehicles/qr"
         ],
     ],
+
     'access_token_validate_route' => [
         "POST",
         "http://auth-LoadB-1FRA2XQ42LLW-82543b575d8e49f3.elb.us-east-1.amazonaws.com:8000",
@@ -71,7 +71,7 @@ return [
     |
     */
 
-    'debug' => (bool) env('APP_DEBUG', false),
+    'debug' => (bool)env('APP_DEBUG', false),
 
     /*
     |--------------------------------------------------------------------------

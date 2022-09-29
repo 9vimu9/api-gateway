@@ -2,19 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use GuzzleHttp\Client;
+use App\Services\ApiClients\ClientResponse;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\RequestOptions;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use JsonException;
-use Psr\Http\Message\ResponseInterface;
 
 class LoginController extends Controller
 {
-  public function login(Request $request){
 
-  }
+    /**
+     * @throws GuzzleException
+     */
+    public function login(): JsonResponse
+    {
+        try {
+            [$targetMethod, $targetBaseUri, $targetUri] = config("app.login_route");
+            $clientResponse = new ClientResponse($targetBaseUri, $targetMethod, $targetUri);
+            $response = $clientResponse->handle();
+            return response()->json(
+                $clientResponse->getArrayFromResponse($response),
+                $response->getStatusCode()
+            );
+        } catch (Exception $exception) {
+            return response()->json([
+                "message" => $exception->getMessage(),
+                "trace" => (array)$exception
+            ], 500);
+
+        }
+
+    }
 
 }
