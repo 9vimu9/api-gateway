@@ -17,3 +17,10 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+foreach (config("app.routes") as $route) {
+    [$method, $baseURI, $uRI] = $route;
+    Route::match([$method],$uRI, [\App\Http\Controllers\GatewayController::class, 'handle']);
+}
+
+//Route::post("api/auth/login", [\App\Http\Controllers\LoginController::class, 'login']);
