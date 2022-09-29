@@ -2,91 +2,68 @@
 
 namespace App\Http\Controllers;
 
-use GuzzleHttp\Client;
+use App\Services\ApiClients\ClientResponse;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\RequestOptions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use JsonException;
-use Psr\Http\Message\ResponseInterface;
 
 class GatewayController extends Controller
 {
     /**
      * @throws GuzzleException
-     * @throws JsonException
      */
     public function handle(Request $request): JsonResponse
     {
-        $requestUri = substr($request->getRequestUri(), 1);
-        $target = [];
-
-        foreach (config("app.routes") as $route) {
-            if ($route[0] === Str::upper($request->method()) && $requestUri === $route["2"]) {
-                $target = $route;
-                break;
-            }
-        }
-
-        if (count($target) === 0) {
-            abort(404, "Requested URL Not Found");
-        }
-        request()->headers->add(['Authorization' => "Bearer {$this->getMicroServiceToken()}"]);
-        [$targetMethod, $targetBaseUri, $targetUri] = $target;
-        $response = $this->getResponse($targetMethod, $targetBaseUri, $targetUri);
-        return response()->json($this->getArrayFromResponse($response), $response->getStatusCode());
-    }
-
-    /**
-     */
-    private function getMicroServiceToken(): string
-    {
         try {
-            [$targetMethod, $targetBaseUri, $targetUri] = config("app.access_token_validate_route");
-            $response = $this->getResponse($targetMethod, $targetBaseUri, $targetUri);
-            $responseArray = $this->getArrayFromResponse($response);
-            if ($response->getStatusCode() !== 200) {
-                abort($response->getStatusCode(), "token validation issue");
+            $requestUri = substr($request->getRequestUri(), 1);
+            $target = [];
+            foreach (config("app.routes") as $route) {
+                if ($route[0] === Str::upper($request->method()) && $requestUri === $route["2"]) {
+                    $target = $route;
+                    break;
+                }
             }
 
-            if ($responseArray["valid"] === false) {
-                abort(400, "Invalid Authorization Code");
+            if (count($target) === 0) {
+                abort(404, "Requested URL Not Found");
             }
-            return $responseArray["token"]["access_token"];
-        } catch (GuzzleException|JsonException $exception) {
-            abort(500, "something went wrong on request validation");
+            request()->headers->add(['Authorization' => "Bearer {$this->getMicroServiceToken()}"]);
+            [$targetMethod, $targetBaseUri, $targetUri] = $target;
+            $clientResponse = new ClientResponse($targetBaseUri, $targetMethod, $targetUri);
+            $response = $clientResponse->handle();
+            return response()->json($clientResponse->getArrayFromResponse($response), $response->getStatusCode());
+        } catch (Exception $exception) {
+            return response()->json([
+                "message" => $exception->getMessage(),
+                "trace" => (array)$exception
+            ], 500);
+
         }
 
 
-    }
-
-    /**
-     * @param $targetMethod
-     * @param $targetBaseUri
-     * @param $targetUri
-     * @return ResponseInterface
-     * @throws GuzzleException
-     */
-    private function getResponse($targetMethod, $targetBaseUri, $targetUri): ResponseInterface
-    {
-
-        return (new Client([
-            'base_uri' => $targetBaseUri
-        ]))->request($targetMethod, $targetUri,
-            [
-                RequestOptions::HEADERS => request()->header(),
-                RequestOptions::JSON => request()->all(),
-                RequestOptions::HTTP_ERRORS => false,
-            ]
-        );
     }
 
     /**
      * @throws JsonException
+     * @throws GuzzleException
      */
-    private function getArrayFromResponse(ResponseInterface $response)
+    private function getMicroServiceToken(): string
     {
-        return json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+        [$targetMethod, $targetBaseUri, $targetUri] = config("app.access_token_validate_route");
+        $clientResponse = new ClientResponse($targetBaseUri, $targetMethod, $targetUri);
+        $response = $clientResponse->handle();
+        $responseArray = $clientResponse->getArrayFromResponse($response);
+        if ($response->getStatusCode() !== 200) {
+            abort($response->getStatusCode(), "token validation issue");
+        }
+
+        if ($responseArray["valid"] === false) {
+            abort(400, "Invalid Authorization Code");
+        }
+        return $responseArray["token"]["access_token"];
+
     }
 }

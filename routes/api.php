@@ -23,4 +23,4 @@ foreach (config("app.routes") as $route) {
     Route::match([$method],$uRI, [\App\Http\Controllers\GatewayController::class, 'handle']);
 }
 
-//Route::post("api/auth/login", [\App\Http\Controllers\LoginController::class, 'login']);
+Route::post("api/auth/login", [\App\Http\Controllers\LoginController::class, 'login']);
