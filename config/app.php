@@ -18,7 +18,7 @@ return [
         ],
         [
             "POST",
-            "http://vehic-LoadB-DD7UYMPF8NH7-a3b45740b59b4abf.elb.us-east-1.amazonaws.com:8000",
+            "http://vehic-loadb-1m3gaelwiro76-e2e2cfc480e16863.elb.us-east-1.amazonaws.com:8000/",
             "api/vehicles"
         ],
         [
