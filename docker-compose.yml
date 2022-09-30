@@ -1,11 +1,11 @@
 version: '2.1'
 
 services:
-  application:
+  myapp:
     build:
       context: .
       dockerfile: Dockerfiles/php/Dockerfile
-#    image: 9wimu9/api-gateway-myapp:latest
+    image: 9wimu9/api-gateway-myapp:latest
     ports:
       - '8003:8000'
 #    volumes:
