@@ -5,20 +5,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfiles/php/Dockerfile
-#    image: 9wimu9/vehicle-api-myapp
+#    image: 9wimu9/api-gateway-myapp:latest
     ports:
       - '8003:8000'
-    volumes:
-      - './:/app'
+#    volumes:
+#      - './:/app'
 
-
-#vehic-LoadB-DD7UYMPF8NH7-a3b45740b59b4abf.elb.us-east-1.amazonaws.com:8000
+#api-g-LoadB-1TAJT39MB1EHS-f67887059b6ed60c.elb.us-east-1.amazonaws.com:8000
 #        #https://github.com/aws/aws-cli/issues/6242#issuecomment-1079214960
-#      aws ecs update-service --cluster vehicle-api --service vehicle-api-MyappService-buC4nKJtJY3G --region us-east-1 --enable-execute-command --force-new-deployment
+#      aws ecs update-service --cluster api-gateway --service api-gateway-MyappService-Ndj20cOSmRZd --region us-east-1 --enable-execute-command --force-new-deployment
 #    aws ecs execute-command  \
 #    --region us-east-1 \
-#    --cluster vehicle-api \
-#    --task b2b0c0c8236841f2b6800f8da45b3bb8 \
+#    --cluster api-gateway \
+#    --task 5548d7b5b9d8437998d4b220040437d5 \
 #    --container  myapp \
 #    --command "/bin/bash" \
 #    --interactive
