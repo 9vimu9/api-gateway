@@ -1,0 +1,217 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  CloudMap:
+    Properties:
+      Description: Service Map for Docker Compose project api-gateway
+      Name: api-gateway.local
+      Vpc: vpc-0def533f2315e89fe
+    Type: AWS::ServiceDiscovery::PrivateDnsNamespace
+  Cluster:
+    Properties:
+      ClusterName: api-gateway
+      Tags:
+        - Key: com.docker.compose.project
+          Value: api-gateway
+    Type: AWS::ECS::Cluster
+  Default8000Ingress:
+    Properties:
+      CidrIp: 0.0.0.0/0
+      Description: myapp:8000/tcp on default network
+      FromPort: 8000
+      GroupId:
+        Ref: DefaultNetwork
+      IpProtocol: TCP
+      ToPort: 8000
+    Type: AWS::EC2::SecurityGroupIngress
+  DefaultNetwork:
+    Properties:
+      GroupDescription: api-gateway Security Group for default network
+      Tags:
+        - Key: com.docker.compose.project
+          Value: api-gateway
+        - Key: com.docker.compose.network
+          Value: api-gateway_default
+      VpcId: vpc-0def533f2315e89fe
+    Type: AWS::EC2::SecurityGroup
+  DefaultNetworkIngress:
+    Properties:
+      Description: Allow communication within network default
+      GroupId:
+        Ref: DefaultNetwork
+      IpProtocol: "-1"
+      SourceSecurityGroupId:
+        Ref: DefaultNetwork
+    Type: AWS::EC2::SecurityGroupIngress
+  LoadBalancer:
+    Properties:
+      LoadBalancerAttributes:
+        - Key: load_balancing.cross_zone.enabled
+          Value: "true"
+      Scheme: internet-facing
+      Subnets:
+        - subnet-0849b849ea31cdf6e
+        - subnet-04d18faded5ffd463
+        - subnet-0d01464d1b103e490
+        - subnet-02533b792b8a25c63
+        - subnet-0f9ddea6e858210a6
+        - subnet-0d8b8aa7a701c2c21
+      Tags:
+        - Key: com.docker.compose.project
+          Value: api-gateway
+      Type: network
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+  LogGroup:
+    Properties:
+      LogGroupName: /docker-compose/api-gateway
+    Type: AWS::Logs::LogGroup
+  MyappService:
+    DependsOn:
+      - MyappTCP8000Listener
+    Properties:
+      Cluster:
+        Fn::GetAtt:
+          - Cluster
+          - Arn
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      DeploymentController:
+        Type: ECS
+      DesiredCount: 1
+      LaunchType: FARGATE
+      LoadBalancers:
+        - ContainerName: myapp
+          ContainerPort: 8000
+          TargetGroupArn:
+            Ref: MyappTCP8000TargetGroup
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - Ref: DefaultNetwork
+          Subnets:
+            - subnet-0849b849ea31cdf6e
+            - subnet-04d18faded5ffd463
+            - subnet-0d01464d1b103e490
+            - subnet-02533b792b8a25c63
+            - subnet-0f9ddea6e858210a6
+            - subnet-0d8b8aa7a701c2c21
+      PlatformVersion: 1.4.0
+      PropagateTags: SERVICE
+      SchedulingStrategy: REPLICA
+      ServiceRegistries:
+        - RegistryArn:
+            Fn::GetAtt:
+              - MyappServiceDiscoveryEntry
+              - Arn
+      Tags:
+        - Key: com.docker.compose.project
+          Value: api-gateway
+        - Key: com.docker.compose.service
+          Value: myapp
+      TaskDefinition:
+        Ref: MyappTaskDefinition
+    Type: AWS::ECS::Service
+  MyappServiceDiscoveryEntry:
+    Properties:
+      Description: '"myapp" service discovery entry in Cloud Map'
+      DnsConfig:
+        DnsRecords:
+          - TTL: 60
+            Type: A
+        RoutingPolicy: MULTIVALUE
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
+      Name: myapp
+      NamespaceId:
+        Ref: CloudMap
+    Type: AWS::ServiceDiscovery::Service
+  MyappTCP8000Listener:
+    Properties:
+      DefaultActions:
+        - ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn:
+                  Ref: MyappTCP8000TargetGroup
+          Type: forward
+      LoadBalancerArn:
+        Ref: LoadBalancer
+      Port: 8000
+      Protocol: TCP
+    Type: AWS::ElasticLoadBalancingV2::Listener
+  MyappTCP8000TargetGroup:
+    Properties:
+      Port: 8000
+      Protocol: TCP
+      Tags:
+        - Key: com.docker.compose.project
+          Value: api-gateway
+      TargetType: ip
+      VpcId: vpc-0def533f2315e89fe
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  MyappTaskDefinition:
+    Properties:
+      ContainerDefinitions:
+        - Command:
+            - us-east-1.compute.internal
+            - api-gateway.local
+          Essential: false
+          Image: docker/ecs-searchdomain-sidecar:1.0
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Ref: LogGroup
+              awslogs-region:
+                Ref: AWS::Region
+              awslogs-stream-prefix: api-gateway
+          Name: Myapp_ResolvConf_InitContainer
+        - DependsOn:
+            - Condition: SUCCESS
+              ContainerName: Myapp_ResolvConf_InitContainer
+          Essential: true
+          Image: docker.io/9wimu9/api-gateway-myapp:latest@sha256:55cd91ff24f034f98c8eb82d51df3a1a88e6df5978894a0c3df6fbb7e3ef7b56
+          LinuxParameters: {}
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Ref: LogGroup
+              awslogs-region:
+                Ref: AWS::Region
+              awslogs-stream-prefix: api-gateway
+          Name: myapp
+          PortMappings:
+            - ContainerPort: 8000
+              HostPort: 8000
+              Protocol: tcp
+      Cpu: "256"
+      ExecutionRoleArn:
+        Ref: MyappTaskExecutionRole
+      Family: api-gateway-myapp
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+    Type: AWS::ECS::TaskDefinition
+  MyappTaskExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Condition: {}
+            Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - arn:aws:iam::931838733925:policy/ecs-exec-required-iam-policy
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      Tags:
+        - Key: com.docker.compose.project
+          Value: api-gateway
+        - Key: com.docker.compose.service
+          Value: myapp
+    Type: AWS::IAM::Role
