@@ -3,35 +3,13 @@
 use Illuminate\Support\Facades\Facade;
 
 return [
-    'login_route' => [
-        "POST",
-        "http://auth-LoadB-1FRA2XQ42LLW-82543b575d8e49f3.elb.us-east-1.amazonaws.com:8000",
-        "api/auth/login"
-    ],
-
+    'login_route' => ["POST",env("AUTH_URL"),"api/auth/login"],
+    'access_token_validate_route' => ["POST",env("AUTH_URL"),"api/auth/validate"],
     //publicly accessible routes here
     'routes' => [
-        [
-            "PUT",
-            "http://quota-LoadB-D4GJJAQLW9EN-d3ba1e5094664f45.elb.us-east-1.amazonaws.com:8000",
-            "api/quotas"
-        ],
-        [
-            "POST",
-            "http://vehic-loadb-1m3gaelwiro76-e2e2cfc480e16863.elb.us-east-1.amazonaws.com:8000/",
-            "api/vehicles"
-        ],
-        [
-            "GET",
-            "http://vehic-LoadB-DD7UYMPF8NH7-a3b45740b59b4abf.elb.us-east-1.amazonaws.com:8000",
-            "api/vehicles/qr"
-        ],
-    ],
-
-    'access_token_validate_route' => [
-        "POST",
-        "http://auth-LoadB-1FRA2XQ42LLW-82543b575d8e49f3.elb.us-east-1.amazonaws.com:8000",
-        "api/auth/validate"
+        ["PUT",env("QUOTA_URL"),"api/quotas"],
+        ["POST",env("VEHICLE_URL"),"api/vehicles"],
+        ["GET",env("VEHICLE_URL"),"api/vehicles/qr"],
     ],
 
     /*
