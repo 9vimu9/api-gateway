@@ -9,6 +9,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use JsonException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GatewayController extends Controller
 {
@@ -35,6 +37,10 @@ class GatewayController extends Controller
             $clientResponse = new ClientResponse($targetBaseUri, $targetMethod, $targetUri);
             $response = $clientResponse->handle();
             return response()->json($clientResponse->getArrayFromResponse($response), $response->getStatusCode());
+        } catch (HttpException | NotFoundHttpException $exception) {
+            return response()->json([
+                "message" => $exception->getMessage(),
+            ], $exception->getStatusCode());
         } catch (Exception $exception) {
             return response()->json([
                 "message" => $exception->getMessage(),
