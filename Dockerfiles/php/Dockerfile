@@ -7,6 +7,6 @@ COPY ./ /app
 COPY ./Dockerfiles/php/setup.sh /opt/bitnami/scripts/laravel
 RUN chmod 755 /opt/bitnami/scripts/laravel/setup.sh
 
-COPY ./Dockerfiles/php/custom.sh /opt/bitnami/scripts/laravel
-RUN chmod 755 /opt/bitnami/scripts/laravel/custom.sh
+COPY ./startup_commands.sh /opt/bitnami/scripts/laravel
+RUN chmod 755 /opt/bitnami/scripts/laravel/startup_commands.sh
 

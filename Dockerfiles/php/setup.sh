@@ -30,7 +30,7 @@ debug_execute php artisan optimize
 
 info "start custom commands"
 # Load custom commands
-. /opt/bitnami/scripts/laravel/custom.sh
+. /opt/bitnami/scripts/laravel/startup_commands.sh
 info "end custom commands"
 
 
