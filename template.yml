@@ -170,7 +170,7 @@ Resources:
             - Condition: SUCCESS
               ContainerName: Myapp_ResolvConf_InitContainer
           Essential: true
-          Image: docker.io/9wimu9/api-gateway-myapp:latest@sha256:55cd91ff24f034f98c8eb82d51df3a1a88e6df5978894a0c3df6fbb7e3ef7b56
+          Image: docker.io/9wimu9/api-gateway-myapp:latest@sha256:8e62e1c0de104073f3e9a65bded53c81a915fc191b06c0df1674795ae3cde255
           LinuxParameters: {}
           LogConfiguration:
             LogDriver: awslogs
@@ -187,6 +187,8 @@ Resources:
               Protocol: tcp
       Cpu: "256"
       ExecutionRoleArn:
+        Ref: MyappTaskExecutionRole
+      TaskRoleArn:
         Ref: MyappTaskExecutionRole
       Family: api-gateway-myapp
       Memory: "512"

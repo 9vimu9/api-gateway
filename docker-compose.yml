@@ -13,11 +13,11 @@ services:
 
 #api-g-LoadB-1TAJT39MB1EHS-f67887059b6ed60c.elb.us-east-1.amazonaws.com:8000
 #        #https://github.com/aws/aws-cli/issues/6242#issuecomment-1079214960
-#      aws ecs update-service --cluster api-gateway --service api-gateway-MyappService-Ndj20cOSmRZd --region us-east-1 --enable-execute-command --force-new-deployment
+#      aws ecs update-service --cluster api-gateway --service api-gateway-MyappService-XSUKw431TYan --region us-east-1 --enable-execute-command --force-new-deployment
 #    aws ecs execute-command  \
 #    --region us-east-1 \
 #    --cluster api-gateway \
-#    --task 78a97707994343a6995547e49ffd451a \
+#    --task 7c08025ff8cb4aa29e4e02580615ca1c \
 #    --container  myapp \
 #    --command "/bin/bash" \
 #    --interactive
