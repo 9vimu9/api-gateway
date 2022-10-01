@@ -65,6 +65,7 @@ Resources:
       LogGroupName: /docker-compose/api-gateway
     Type: AWS::Logs::LogGroup
   MyappService:
+    EnableExecuteCommand: true
     DependsOn:
       - MyappTCP8000Listener
     Properties:
