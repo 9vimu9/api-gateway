@@ -16,7 +16,7 @@ Resources:
   Default8000Ingress:
     Properties:
       CidrIp: 0.0.0.0/0
-      Description: myapp:8000/tcp on default network
+      Description: laravel:8000/tcp on default network
       FromPort: 8000
       GroupId:
         Ref: DefaultNetwork
@@ -64,11 +64,11 @@ Resources:
     Properties:
       LogGroupName: /docker-compose/api-gateway
     Type: AWS::Logs::LogGroup
-  MyappService:
-    EnableExecuteCommand: true
+  LaravelService:
     DependsOn:
-      - MyappTCP8000Listener
+      - LaravelTCP8000Listener
     Properties:
+      EnableExecuteCommand: true
       Cluster:
         Fn::GetAtt:
           - Cluster
@@ -81,10 +81,10 @@ Resources:
       DesiredCount: 1
       LaunchType: FARGATE
       LoadBalancers:
-        - ContainerName: myapp
+        - ContainerName: laravel
           ContainerPort: 8000
           TargetGroupArn:
-            Ref: MyappTCP8000TargetGroup
+            Ref: LaravelTCP8000TargetGroup
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
@@ -103,19 +103,19 @@ Resources:
       ServiceRegistries:
         - RegistryArn:
             Fn::GetAtt:
-              - MyappServiceDiscoveryEntry
+              - LaravelServiceDiscoveryEntry
               - Arn
       Tags:
         - Key: com.docker.compose.project
           Value: api-gateway
         - Key: com.docker.compose.service
-          Value: myapp
+          Value: laravel
       TaskDefinition:
-        Ref: MyappTaskDefinition
+        Ref: LaravelTaskDefinition
     Type: AWS::ECS::Service
-  MyappServiceDiscoveryEntry:
+  LaravelServiceDiscoveryEntry:
     Properties:
-      Description: '"myapp" service discovery entry in Cloud Map'
+      Description: '"laravel" service discovery entry in Cloud Map'
       DnsConfig:
         DnsRecords:
           - TTL: 60
@@ -123,24 +123,24 @@ Resources:
         RoutingPolicy: MULTIVALUE
       HealthCheckCustomConfig:
         FailureThreshold: 1
-      Name: myapp
+      Name: laravel
       NamespaceId:
         Ref: CloudMap
     Type: AWS::ServiceDiscovery::Service
-  MyappTCP8000Listener:
+  LaravelTCP8000Listener:
     Properties:
       DefaultActions:
         - ForwardConfig:
             TargetGroups:
               - TargetGroupArn:
-                  Ref: MyappTCP8000TargetGroup
+                  Ref: LaravelTCP8000TargetGroup
           Type: forward
       LoadBalancerArn:
         Ref: LoadBalancer
       Port: 8000
       Protocol: TCP
     Type: AWS::ElasticLoadBalancingV2::Listener
-  MyappTCP8000TargetGroup:
+  LaravelTCP8000TargetGroup:
     Properties:
       Port: 8000
       Protocol: TCP
@@ -150,7 +150,7 @@ Resources:
       TargetType: ip
       VpcId: vpc-0def533f2315e89fe
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
-  MyappTaskDefinition:
+  LaravelTaskDefinition:
     Properties:
       ContainerDefinitions:
         - Command:
@@ -166,12 +166,12 @@ Resources:
               awslogs-region:
                 Ref: AWS::Region
               awslogs-stream-prefix: api-gateway
-          Name: Myapp_ResolvConf_InitContainer
+          Name: Laravel_ResolvConf_InitContainer
         - DependsOn:
             - Condition: SUCCESS
-              ContainerName: Myapp_ResolvConf_InitContainer
+              ContainerName: Laravel_ResolvConf_InitContainer
           Essential: true
-          Image: docker.io/9wimu9/api-gateway-myapp:latest@sha256:8e62e1c0de104073f3e9a65bded53c81a915fc191b06c0df1674795ae3cde255
+          Image: docker.io/9wimu9/api-gateway-laravel:latest@sha256:a7348a8d598769d07bfb37b4e5edff14c2d606b418a91a650ff88f5a025771f1
           LinuxParameters: {}
           LogConfiguration:
             LogDriver: awslogs
@@ -181,23 +181,23 @@ Resources:
               awslogs-region:
                 Ref: AWS::Region
               awslogs-stream-prefix: api-gateway
-          Name: myapp
+          Name: laravel
           PortMappings:
             - ContainerPort: 8000
               HostPort: 8000
               Protocol: tcp
       Cpu: "256"
       ExecutionRoleArn:
-        Ref: MyappTaskExecutionRole
+        Ref: LaravelTaskExecutionRole
       TaskRoleArn:
-        Ref: MyappTaskExecutionRole
-      Family: api-gateway-myapp
+        Ref: LaravelTaskExecutionRole
+      Family: api-gateway-laravel
       Memory: "512"
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
     Type: AWS::ECS::TaskDefinition
-  MyappTaskExecutionRole:
+  LaravelTaskExecutionRole:
     Properties:
       AssumeRolePolicyDocument:
         Statement:
@@ -216,5 +216,5 @@ Resources:
         - Key: com.docker.compose.project
           Value: api-gateway
         - Key: com.docker.compose.service
-          Value: myapp
+          Value: laravel
     Type: AWS::IAM::Role
